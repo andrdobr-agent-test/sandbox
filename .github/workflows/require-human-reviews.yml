@@ -1,0 +1,57 @@
+# Required check: GitHub counts bot APPROVE reviews. This job does not.
+# Ignore user.type == Bot. Human-authored PRs need HUMAN_MIN other humans.
+# Bot-authored PRs need BOT_AUTHOR_MIN humans (default 2).
+#
+# Put this on the default branch and add a required status check named
+# "human-reviews" on protect-default / Suite develop protection.
+name: human-reviews
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+
+jobs:
+  human-reviews:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    env:
+      HUMAN_MIN: "1"
+      BOT_AUTHOR_MIN: "2"
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.issue.number;
+            const humanMin = parseInt(process.env.HUMAN_MIN, 10);
+            const botMin = parseInt(process.env.BOT_AUTHOR_MIN, 10);
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+            const author = pr.user.login.toLowerCase();
+            const authorIsBot = pr.user.type === "Bot" || author.endsWith("[bot]");
+
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner, repo, pull_number, per_page: 100,
+            });
+            const latest = new Map();
+            for (const r of reviews) {
+              if (!r.user) continue;
+              latest.set(r.user.login.toLowerCase(), r);
+            }
+            let humans = 0;
+            for (const r of latest.values()) {
+              const login = r.user.login.toLowerCase();
+              const isBot = r.user.type === "Bot" || login.endsWith("[bot]");
+              if (isBot || login === author) continue;
+              if (r.state === "APPROVED") humans += 1;
+            }
+            const need = authorIsBot ? botMin : humanMin;
+            const msg = `human approvals=${humans} need=${need} (author=${pr.user.login} bot=${authorIsBot}; bot reviews ignored)`;
+            core.info(msg);
+            if (humans < need) {
+              core.setFailed(msg);
+            }
