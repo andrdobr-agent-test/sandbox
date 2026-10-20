@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/octo-sts/app/refs/heads/main/pkg/octosts/octosts.TrustPolicy.json
+#
+# Repo-level policy for andrdobr-agent-test/sandbox.
+# Google cannot restrict an OAuth client to a group; this YAML is the ACL.
+#
+# audience must be the Client ID string from Cloud Console as-is
+# (it already ends in .apps.googleusercontent.com). Do not append that suffix twice.
+#
+# claim_pattern values are regex. Go matches unanchored, so keep ^...$.
+
+issuer: https://accounts.google.com
+subject_pattern: "^[0-9]+$"
+audience: "331452262350-cl5ev1hrll57hfiebq69m1onq2mca5q0.apps.googleusercontent.com"
+claim_pattern:
+  hd: "^satoshilabs\\.com$"
+  email: "^(andrei\\.dabrakou|vitalij\\.dovhanyc)@satoshilabs\\.com$"
+  email_verified: "^true$"
+
+permissions:
+  contents: write
+  pull_requests: write
+  metadata: read
