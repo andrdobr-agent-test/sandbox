@@ -19,7 +19,7 @@ jobs:
       pull-requests: read
     env:
       HUMAN_MIN: "1"
-      BOT_AUTHOR_MIN: "2"
+      BOT_AUTHOR_MIN: "1"
     steps:
       - uses: actions/github-script@v7
         with:
