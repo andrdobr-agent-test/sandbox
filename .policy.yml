@@ -2,6 +2,8 @@ policy:
   approval:
     - security team has approved
     - owner of haha has approved
+    - bot PR has two approvals
+    - agent branch has two approvals
 
 approval_rules:
   - name: security team has approved
@@ -33,3 +35,30 @@ approval_rules:
       count: 1
       users:
         - "0x64nl"
+
+  - name: bot PR has two approvals
+    description: PRs opened by bot accounts require two approvals
+    if:
+      has_author_in:
+        users:
+          - "andrdobr-agent-bot[bot]"
+    options:
+      request_review:
+        enabled: true
+        mode: random-users
+    requires:
+      count: 2
+      permissions: ["write"]
+
+  - name: agent branch has two approvals
+    description: PRs from agent/* branches require two approvals
+    if:
+      from_branch:
+        pattern: "(^|:)agent/"
+    options:
+      request_review:
+        enabled: true
+        mode: random-users
+    requires:
+      count: 2
+      permissions: ["write"]
