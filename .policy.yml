@@ -1,8 +1,35 @@
-# This policy will always approve every PR.
-
 policy:
   approval:
-  - no approval necessary
+    - security team has approved
+    - owner of haha has approved
 
 approval_rules:
-- name: no approval necessary
+  - name: security team has approved
+    description: Changes under .github/ require review from the security team
+    if:
+      changed_files:
+        globs:
+          - ".github/**"
+    options:
+      request_review:
+        enabled: true
+        mode: teams
+    requires:
+      count: 1
+      teams:
+        - "andrdobr-agent-test/security"
+
+  - name: owner of haha has approved
+    description: Changes to the haha file require review from its owner
+    if:
+      changed_files:
+        paths:
+          - "^haha$"
+    options:
+      request_review:
+        enabled: true
+        mode: all-users
+    requires:
+      count: 1
+      users:
+        - "0x64nl"
