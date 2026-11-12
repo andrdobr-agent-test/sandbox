@@ -49,7 +49,8 @@ approval_rules:
     if:
       has_author_in:
         users:
-          - "andrdobr-agent-bot[bot]"
+          - "clanker-agent[bot]"         # pr-broker App (current)
+          - "andrdobr-agent-bot[bot]"    # earlier agent App
     requires:
       count: 2
       permissions: ["write"]
