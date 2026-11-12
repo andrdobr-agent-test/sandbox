@@ -1,64 +1,114 @@
+# policy-bot configuration (https://github.com/palantir/policy-bot, v1.42.x)
+#
+# Review model
+#   Every PR
+#     1 approval from someone with write access who is neither the author
+#     nor a committer on the PR.
+#   Agent PR (opened by the pr-broker App, or from an agent/** branch)
+#     2 approvals from people with write access. The bot owner (the developer
+#     the agent worked for) may approve and counts as one of the two, but
+#     never alone: the independent approval above still needs someone who
+#     did not author commits, and two distinct approvers are needed overall.
+#   Path owners
+#     .github/** needs the security team; haha needs its owner.
+#
+# Bot reviews never count: Apps are not repository collaborators, so they
+# never satisfy `permissions: ["write"]`.
+#
+# The protect-main ruleset in iac/ requires the "policy-bot: main" status from
+# the policy-bot App, so this file is what gates merging into main.
+
 policy:
   approval:
-    - security team has approved
-    - owner of haha has approved
+    # Every entry must pass. Rules whose `if` does not match are skipped.
+    - every PR has an independent approval
     - bot PR has two approvals
     - agent branch has two approvals
+    - security team has approved
+    - owner of haha has approved
+  disapproval:
+    requires:
+      permissions: ["write"]
 
 approval_rules:
+  # ---------------------------------------------------------------- baseline
+  - name: every PR has an independent approval
+    description: One approval from a writer who did not author or commit to this PR.
+    requires:
+      count: 1
+      permissions: ["write"]
+    options:
+      allow_author: false
+      allow_contributors: false
+      invalidate_on_push: true
+      ignore_update_merges: true
+
+  # ------------------------------------------------------------- agent PRs
+  - name: bot PR has two approvals
+    description: PRs opened by the pr-broker App need two writer approvals; the bot owner may be one.
+    if:
+      has_author_in:
+        users:
+          - "clanker-agent[bot]"         # pr-broker App (current)
+          - "andrdobr-agent-bot[bot]"    # earlier agent App
+    requires:
+      count: 2
+      permissions: ["write"]
+    options:
+      allow_author: false        # the bot itself
+      allow_contributors: true   # the owner counts toward the two
+      invalidate_on_push: true
+      ignore_update_merges: true
+      request_review:
+        enabled: true
+        mode: random-users
+
+  - name: agent branch has two approvals
+    description: PRs from agent/** branches (including forks) need two writer approvals.
+    if:
+      from_branch:
+        pattern: "(^|:)agent/"
+    requires:
+      count: 2
+      permissions: ["write"]
+    options:
+      allow_author: false
+      allow_contributors: true
+      invalidate_on_push: true
+      ignore_update_merges: true
+      request_review:
+        enabled: true
+        mode: random-users
+
+  # ------------------------------------------------------------ path owners
   - name: security team has approved
-    description: Changes under .github/ require review from the security team
+    description: Changes under .github/ require review from the security team.
     if:
       changed_files:
         globs:
           - ".github/**"
-    options:
-      request_review:
-        enabled: true
-        mode: teams
     requires:
       count: 1
       teams:
         - "andrdobr-agent-test/security"
+    options:
+      invalidate_on_push: true
+      request_review:
+        enabled: true
+        mode: teams
 
   - name: owner of haha has approved
-    description: Changes to the haha file require review from its owner
+    description: Changes to the haha file require review from its owner.
     if:
       changed_files:
         paths:
           - "^haha$"
-    options:
-      request_review:
-        enabled: true
-        mode: all-users
     requires:
       count: 1
       users:
         - "0x64nl"
-
-  - name: bot PR has two approvals
-    description: PRs opened by bot accounts require two approvals
-    if:
-      has_author_in:
-        users:
-          - "andrdobr-agent-bot[bot]"
     options:
+      invalidate_on_push: true
       request_review:
         enabled: true
-        mode: random-users
-    requires:
-      count: 2
-      permissions: ["write"]
-
-  - name: agent branch has two approvals
-    description: PRs from agent/* branches require two approvals
-    if:
-      from_branch:
-        pattern: "(^|:)agent/"
-    options:
-      request_review:
-        enabled: true
-        mode: random-users
-    requires:
-      count: 2
-      permissions: ["write"]
+        mode: all-users
