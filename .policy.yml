@@ -1,64 +1,34 @@
 policy:
   approval:
-    - security team has approved
-    - owner of haha has approved
     - bot PR has two approvals
-    - agent branch has two approvals
+    - fork PR has two approvals
+    - default has one approval
 
 approval_rules:
-  - name: security team has approved
-    description: Changes under .github/ require review from the security team
-    if:
-      changed_files:
-        globs:
-          - ".github/**"
-    options:
-      request_review:
-        enabled: true
-        mode: teams
-    requires:
-      count: 1
-      teams:
-        - "andrdobr-agent-test/security"
-
-  - name: owner of haha has approved
-    description: Changes to the haha file require review from its owner
-    if:
-      changed_files:
-        paths:
-          - "^haha$"
-    options:
-      request_review:
-        enabled: true
-        mode: all-users
-    requires:
-      count: 1
-      users:
-        - "0x64nl"
-
   - name: bot PR has two approvals
-    description: PRs opened by bot accounts require two approvals
+    description: PRs opened by bot accounts require two approvals from org members
     if:
       has_author_in:
         users:
           - "andrdobr-agent-bot[bot]"
-    options:
-      request_review:
-        enabled: true
-        mode: random-users
     requires:
       count: 2
-      permissions: ["write"]
+      organizations:
+        - "andrdobr-agent-test"
 
-  - name: agent branch has two approvals
-    description: PRs from agent/* branches require two approvals
+  - name: fork PR has two approvals
+    description: PRs from forks require two approvals from org members
     if:
       from_branch:
-        pattern: "(^|:)agent/"
-    options:
-      request_review:
-        enabled: true
-        mode: random-users
+        # Head branches of fork PRs are reported as "owner:branch"
+        pattern: "^[^:]+:"
     requires:
       count: 2
+      organizations:
+        - "andrdobr-agent-test"
+
+  - name: default has one approval
+    description: All other PRs require one approval
+    requires:
+      count: 1
       permissions: ["write"]
