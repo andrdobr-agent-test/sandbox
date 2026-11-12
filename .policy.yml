@@ -15,6 +15,10 @@ approval_rules:
       count: 2
       organizations:
         - "andrdobr-agent-test"
+    options:
+      methods:
+        comments: []
+        github_review: true
 
   - name: fork PR has two approvals
     description: PRs from forks require two approvals from org members
@@ -26,9 +30,17 @@ approval_rules:
       count: 2
       organizations:
         - "andrdobr-agent-test"
+    options:
+      methods:
+        comments: []
+        github_review: true
 
   - name: default has one approval
     description: All other PRs require one approval
     requires:
       count: 1
       permissions: ["write"]
+    options:
+      methods:
+        comments: []
+        github_review: true
