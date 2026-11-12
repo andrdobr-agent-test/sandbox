@@ -1,0 +1,4 @@
+owner              = "andrdobr-agent-test"
+repository         = "sandbox"
+policy_bot_app_id  = 0 # policy-bot GitHub App ID
+policy_bot_context = "policy-bot: main"
