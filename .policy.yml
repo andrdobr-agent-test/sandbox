@@ -17,28 +17,28 @@ approval_rules:
       organizations:
         - "andrdobr-agent-test"
     options:
+      invalidate_on_push: true
       methods:
         comments: []
         github_review: true
 
-  # Only active for org members opening a PR from a branch in this repository.
-  # Fork PRs and PRs from non-members skip this rule, so the "or" above can only
-  # be satisfied by "external PR has two approvals".
-  - name: org member PR has one approval
+   - name: org member PR has one approval
     description: PRs opened by org members from a branch in this repository require one approval
     if:
       has_author_in:
         organizations:
           - "andrdobr-agent-test"
+      only_has_contributors_in:
+        organizations:
+          - "andrdobr-agent-test"
       from_branch:
-        # policy-bot reports the head branch of a cross-repository (fork) PR as
-        # "owner:branch". Git branch names cannot contain ":", so a head branch
-        # without ":" is always from this repository.
+        # Fork PR heads are reported as "owner:branch"; ":" is invalid in git refs.
         pattern: "^[^:]+$"
     requires:
       count: 1
       permissions: ["write"]
     options:
+      invalidate_on_push: false
       methods:
         comments: []
         github_review: true
@@ -50,6 +50,7 @@ approval_rules:
       organizations:
         - "andrdobr-agent-test"
     options:
+      invalidate_on_push: true
       methods:
         comments: []
         github_review: true
