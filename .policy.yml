@@ -22,7 +22,7 @@ approval_rules:
         comments: []
         github_review: true
 
-   - name: org member PR has one approval
+  - name: org member PR has one approval
     description: PRs opened by org members from a branch in this repository require one approval
     if:
       has_author_in:
